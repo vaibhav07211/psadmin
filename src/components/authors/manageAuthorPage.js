@@ -7,18 +7,36 @@ var Router = require('react-router');
 var toastr = require('toastr');
 
 var ManageAuthorPage = React.createClass({
-	mixins:[
+	mixins: [
 		Router.Navigation
 	],
+
+	statics: {
+		willTransitionFrom: function(transition, component){
+			if(component.state.dirty && !confirm('Do you want to save unsaved changes?')){
+				transition.abort();
+			}
+		}
+	},
 
 	getInitialState: function(){
 		return {
 			author: {id: '', firstName: '', lastName: ''},
-			errors: {}
+			errors: {},
+			dirty: false
 		};
 	},
 
+	componentWillMount: function(){
+		var authorId = this.props.params.id;//from the path author :id
+
+		if(authorId){
+			this.setState({author: AuthorApi.getAuthorById(authorId)});
+		}
+	},
+
 	setAuthorState: function(event){
+		this.setState({dirty: true});
 		var field = event.target.name;
 		var value = event.target.value;
 		this.state.author[field] = value;
@@ -29,12 +47,12 @@ var ManageAuthorPage = React.createClass({
 		var formIsValid = true;
 		this.state.errors = {};//clear any previous error
 		if(this.state.author.firstName.length < 3){
-			this.state.errors.firstName= 'First Name must be atleast 3 characters'
+			this.state.errors.firstName = 'First Name must be atleast 3 characters';
 			formIsValid = false;
 		}
 
 		if(this.state.author.lastName.length < 3){
-			this.state.errors.lastName= 'Last Name must be atleast 3 characters'
+			this.state.errors.lastName = 'Last Name must be atleast 3 characters';
 			formIsValid = false;
 		}
 		this.setState({errors: this.state.errors});
@@ -47,6 +65,7 @@ var ManageAuthorPage = React.createClass({
 			return;
 		}
 		AuthorApi.saveAuthor(this.state.author);
+		this.setState({dirty: false});
 		toastr.success('Author saved.');
 		this.transitionTo('authors');
 	},
