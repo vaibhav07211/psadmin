@@ -1,12 +1,11 @@
 "use strict";
-
 var React = require('react');
 var Router = require('react-router');
 var Link = Router.Link;
 
 var NotFoundPage = React.createClass({
 	render: function() {
-		return(
+		return (
 			<div>
 				<h1>Page Not Found</h1>
 				<p>there is nothing to see here</p>
