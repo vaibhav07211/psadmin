@@ -50287,7 +50287,7 @@ var AuthorActions = {
 
 module.exports = AuthorActions;
 
-},{"../api/authorApi":206,"../constants/actionTypes":218,"../dispatcher/appDispatcher":219}],205:[function(require,module,exports){
+},{"../api/authorApi":206,"../constants/actionTypes":219,"../dispatcher/appDispatcher":220}],205:[function(require,module,exports){
 "use strict";
 
 var Dispatcher = require('../dispatcher/appDispatcher');
@@ -50307,7 +50307,7 @@ var InitializeActions = {
 
 module.exports = InitializeActions;
 
-},{"../api/authorApi":206,"../constants/actionTypes":218,"../dispatcher/appDispatcher":219}],206:[function(require,module,exports){
+},{"../api/authorApi":206,"../constants/actionTypes":219,"../dispatcher/appDispatcher":220}],206:[function(require,module,exports){
 "use strict";
 
 //This file is mocking a web API by hitting hard coded data.
@@ -50447,11 +50447,11 @@ var App = React.createClass({displayName: "App",
 
 module.exports = App;
 
-},{"./common/header":214,"jquery":5,"react":202,"react-router":33}],210:[function(require,module,exports){
+},{"./common/header":216,"jquery":5,"react":202,"react-router":33}],210:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
-var Input = require('../common/textInput');
+var Input = require('../common/dynamicInputType');
 var AuthorForm = React.createClass({displayName: "AuthorForm",
 	propTypes: {
 		author: React.PropTypes.object.isRequired,
@@ -50488,7 +50488,7 @@ var AuthorForm = React.createClass({displayName: "AuthorForm",
 
 module.exports = AuthorForm;
 
-},{"../common/textInput":215,"react":202}],211:[function(require,module,exports){
+},{"../common/dynamicInputType":215,"react":202}],211:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -50579,7 +50579,7 @@ var AuthorPage = React.createClass({displayName: "AuthorPage",
 
 module.exports = AuthorPage;
 
-},{"../../actions/authorActions":204,"../../stores/authorStore":222,"./authorList":211,"react":202,"react-router":33}],213:[function(require,module,exports){
+},{"../../actions/authorActions":204,"../../stores/authorStore":223,"./authorList":211,"react":202,"react-router":33}],213:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -50673,7 +50673,86 @@ var ManageAuthorPage = React.createClass({displayName: "ManageAuthorPage",
 
 module.exports = ManageAuthorPage;
 
-},{"../../actions/authorActions":204,"../../stores/authorStore":222,"./authorForm":210,"react":202,"react-router":33,"toastr":203}],214:[function(require,module,exports){
+},{"../../actions/authorActions":204,"../../stores/authorStore":223,"./authorForm":210,"react":202,"react-router":33,"toastr":203}],214:[function(require,module,exports){
+"use strict";
+
+var React = require('react');
+var DynamicInputTypes = require('../common/dynamicInputType');
+var _ = require('lodash');
+
+var ChatBot = React.createClass({displayName: "ChatBot",
+	getInitialState: function(){
+		return {
+			chatTextValue: {text: '', inputType: 'text', questionAsked: 'On Which date do you want to book?'}
+		};
+	},
+
+	componentWillMount: function(){
+		var questionAsked = this.state.chatTextValue.questionAsked;
+
+		if(questionAsked.includes('budget')){
+			this.state.chatTextValue.inputType = 'number';
+			this.setState({chatTextValue: this.state.chatTextValue});
+		}else if(questionAsked.includes('date')){
+			this.state.chatTextValue.inputType = 'date';
+			this.setState({chatTextValue: this.state.chatTextValue});
+		}else{
+			this.state.chatTextValue.inputType = 'text';
+			this.setState({chatTextValue: this.state.chatTextValue});
+		}
+	},
+
+	setChatBotState: function(event){
+		var field = event.target.name;
+		var value = event.target.value;
+		this.state.chatTextValue[field] = value;
+		return this.setState({chatTextValue: this.state.chatTextValue});
+	},
+
+	render: function() {
+		return (
+			React.createElement("div", null, 
+				React.createElement("h1", null, "ChatBot"), 
+				React.createElement("label", null, this.state.chatTextValue.questionAsked), 
+				React.createElement(DynamicInputTypes, {
+					type: this.state.chatTextValue.inputType, 
+					name: "text", 
+					label: "text", 
+					value: this.state.chatTextValue.text, 
+					onChange: this.setChatBotState}
+				)
+			)
+		);
+	}
+});
+
+module.exports = ChatBot;
+
+},{"../common/dynamicInputType":215,"lodash":6,"react":202}],215:[function(require,module,exports){
+"use strict";
+
+var React = require('react');
+
+var DynamicInputTypes = React.createClass({displayName: "DynamicInputTypes",
+	render: function(){
+		return (
+			React.createElement("div", {className: "form-group"}, 
+				React.createElement("div", {className: "field"}, 
+					React.createElement("input", {type: this.props.type, 
+						name: this.props.name, 
+						className: "form-control", 
+						ref: this.props.name, 
+						onChange: this.props.onChange, 
+						value: this.props.value})
+				)
+			)
+		);
+	}
+});
+
+module.exports = DynamicInputTypes;
+
+},{"react":202}],216:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -50691,7 +50770,8 @@ var Header = React.createClass({displayName: "Header",
 					React.createElement("ul", {className: "nav navbar-nav"}, 
 						React.createElement("li", null, React.createElement(Link, {to: "app"}, "Home")), 
 						React.createElement("li", null, React.createElement(Link, {to: "authors"}, "Authors")), 
-						React.createElement("li", null, React.createElement(Link, {to: "about"}, "About"))
+						React.createElement("li", null, React.createElement(Link, {to: "about"}, "About")), 
+						React.createElement("li", null, React.createElement(Link, {to: "chatBot"}, "Chat Bot"))
 					)	
 				)	
 			)
@@ -50701,48 +50781,7 @@ var Header = React.createClass({displayName: "Header",
 
 module.exports = Header;
 
-},{"react":202,"react-router":33}],215:[function(require,module,exports){
-"use strict";
-
-var React = require('react');
-
-
-var Input = React.createClass({displayName: "Input",
-	propTypes: {
-		name: React.PropTypes.string.isRequired,
-		label: React.PropTypes.string.isRequired,
-		onChange: React.PropTypes.func.isRequired,
-		placeholder: React.PropTypes.string,
-		value: React.PropTypes.string,
-		error: React.PropTypes.string
-	},
-
-	render: function () {
-		var wrapperClass = 'form-group';
-		if(this.props.error && this.props.error.length > 0){
-			wrapperClass += " " + 'has-error';
-		}
-		return (
-			React.createElement("div", {className: wrapperClass}, 
-				React.createElement("label", {htmlFor: this.props.name}, this.props.label), 
-				React.createElement("div", {className: "field"}, 
-					React.createElement("input", {type: "text", 
-						name: this.props.name, 
-						className: "form-control", 
-						placeholder: this.props.placeholder, 
-						ref: this.props.name, 
-						onChange: this.props.onChange, 
-						value: this.props.value}), 
-					React.createElement("div", {className: "input"}, this.props.error)
-				)
-			)	
-		);
-	}
-});
-
-module.exports = Input;
-
-},{"react":202}],216:[function(require,module,exports){
+},{"react":202,"react-router":33}],217:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -50764,7 +50803,7 @@ var Home = React.createClass({displayName: "Home",
 
 module.exports = Home;
 
-},{"react":202,"react-router":33}],217:[function(require,module,exports){
+},{"react":202,"react-router":33}],218:[function(require,module,exports){
 "use strict";
 var React = require('react');
 var Router = require('react-router');
@@ -50785,7 +50824,7 @@ var NotFoundPage = React.createClass({displayName: "NotFoundPage",
 
 module.exports = NotFoundPage;
 
-},{"react":202,"react-router":33}],218:[function(require,module,exports){
+},{"react":202,"react-router":33}],219:[function(require,module,exports){
 "use strict";
 
 var keyMirror = require('react/lib/keyMirror');
@@ -50797,12 +50836,12 @@ module.exports = keyMirror({
 	DELETE_AUTHOR: null
 });
 
-},{"react/lib/keyMirror":187}],219:[function(require,module,exports){
+},{"react/lib/keyMirror":187}],220:[function(require,module,exports){
 var Dispatcher = require('flux').Dispatcher;
 
 module.exports = new Dispatcher();
 
-},{"flux":2}],220:[function(require,module,exports){
+},{"flux":2}],221:[function(require,module,exports){
 var React = require('react');
 var Router = require('react-router');
 var routes = require('./routes');
@@ -50813,7 +50852,7 @@ InitializeActions.initApp();
 Router.run(routes, function(Handler){
 	React.render(React.createElement(Handler, null), document.getElementById('app'));
 });
-},{"./actions/initializeActions":205,"./routes":221,"react":202,"react-router":33}],221:[function(require,module,exports){
+},{"./actions/initializeActions":205,"./routes":222,"react":202,"react-router":33}],222:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -50831,6 +50870,7 @@ var routes = (
 		React.createElement(Route, {name: "addAuthor", path: "author", handler: require('./components/authors/manageAuthorPage')}), 
 		React.createElement(Route, {name: "manageAuthor", path: "author/:id", handler: require('./components/authors/manageAuthorPage')}), 
 		React.createElement(Route, {name: "about", handler: require('./components/about/aboutPage')}), 
+		React.createElement(Route, {name: "chatBot", handler: require('./components/chatBot/chatBot')}), 
 		React.createElement(NotFoundRoute, {handler: require('./components/notFoundPage')}), 
 		React.createElement(Redirect, {from: "about-us", to: "about"}), 
 		React.createElement(Redirect, {from: "about/*", to: "about"})
@@ -50839,7 +50879,7 @@ var routes = (
 
 module.exports = routes;
 
-},{"./components/about/aboutPage":208,"./components/app":209,"./components/authors/authorPage":212,"./components/authors/manageAuthorPage":213,"./components/homePage":216,"./components/notFoundPage":217,"react":202,"react-router":33}],222:[function(require,module,exports){
+},{"./components/about/aboutPage":208,"./components/app":209,"./components/authors/authorPage":212,"./components/authors/manageAuthorPage":213,"./components/chatBot/chatBot":214,"./components/homePage":217,"./components/notFoundPage":218,"react":202,"react-router":33}],223:[function(require,module,exports){
 "use strict";
 
 var Dispatcher = require('../dispatcher/appDispatcher');
@@ -50902,4 +50942,4 @@ Dispatcher.register(function(action){
 
 module.exports = AuthorStore;
 
-},{"../constants/actionTypes":218,"../dispatcher/appDispatcher":219,"events":1,"lodash":6,"object-assign":7}]},{},[220]);
+},{"../constants/actionTypes":219,"../dispatcher/appDispatcher":220,"events":1,"lodash":6,"object-assign":7}]},{},[221]);
