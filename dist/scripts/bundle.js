@@ -50287,7 +50287,7 @@ var AuthorActions = {
 
 module.exports = AuthorActions;
 
-},{"../api/authorApi":206,"../constants/actionTypes":219,"../dispatcher/appDispatcher":220}],205:[function(require,module,exports){
+},{"../api/authorApi":206,"../constants/actionTypes":221,"../dispatcher/appDispatcher":223}],205:[function(require,module,exports){
 "use strict";
 
 var Dispatcher = require('../dispatcher/appDispatcher');
@@ -50307,7 +50307,7 @@ var InitializeActions = {
 
 module.exports = InitializeActions;
 
-},{"../api/authorApi":206,"../constants/actionTypes":219,"../dispatcher/appDispatcher":220}],206:[function(require,module,exports){
+},{"../api/authorApi":206,"../constants/actionTypes":221,"../dispatcher/appDispatcher":223}],206:[function(require,module,exports){
 "use strict";
 
 //This file is mocking a web API by hitting hard coded data.
@@ -50447,11 +50447,11 @@ var App = React.createClass({displayName: "App",
 
 module.exports = App;
 
-},{"./common/header":216,"jquery":5,"react":202,"react-router":33}],210:[function(require,module,exports){
+},{"./common/header":217,"jquery":5,"react":202,"react-router":33}],210:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
-var Input = require('../common/dynamicInputType');
+var Input = require('../common/textInput');
 var AuthorForm = React.createClass({displayName: "AuthorForm",
 	propTypes: {
 		author: React.PropTypes.object.isRequired,
@@ -50488,7 +50488,7 @@ var AuthorForm = React.createClass({displayName: "AuthorForm",
 
 module.exports = AuthorForm;
 
-},{"../common/dynamicInputType":215,"react":202}],211:[function(require,module,exports){
+},{"../common/textInput":218,"react":202}],211:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -50579,7 +50579,7 @@ var AuthorPage = React.createClass({displayName: "AuthorPage",
 
 module.exports = AuthorPage;
 
-},{"../../actions/authorActions":204,"../../stores/authorStore":223,"./authorList":211,"react":202,"react-router":33}],213:[function(require,module,exports){
+},{"../../actions/authorActions":204,"../../stores/authorStore":226,"./authorList":211,"react":202,"react-router":33}],213:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -50673,33 +50673,33 @@ var ManageAuthorPage = React.createClass({displayName: "ManageAuthorPage",
 
 module.exports = ManageAuthorPage;
 
-},{"../../actions/authorActions":204,"../../stores/authorStore":223,"./authorForm":210,"react":202,"react-router":33,"toastr":203}],214:[function(require,module,exports){
+},{"../../actions/authorActions":204,"../../stores/authorStore":226,"./authorForm":210,"react":202,"react-router":33,"toastr":203}],214:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
 var DynamicInputTypes = require('../common/dynamicInputType');
+var ChatHistory = require('../chatHistory/chatHistory');
+var QuestionsList = require('../../constants/workFlow').workflow;
 var _ = require('lodash');
 
 var ChatBot = React.createClass({displayName: "ChatBot",
 	getInitialState: function(){
 		return {
-			chatTextValue: {text: '', inputType: 'text', questionAsked: 'On Which date do you want to book?'}
+			chatTextValue: {text: "", inputType: "", questionAsked: "", step: 1}
 		};
 	},
 
-	componentWillMount: function(){
-		var questionAsked = this.state.chatTextValue.questionAsked;
+	nextQuestion: function(step){
+		var nextQuestion = _.find(QuestionsList, {Step: step});
+		return nextQuestion
+	},
 
-		if(questionAsked.includes('budget')){
-			this.state.chatTextValue.inputType = 'number';
-			this.setState({chatTextValue: this.state.chatTextValue});
-		}else if(questionAsked.includes('date')){
-			this.state.chatTextValue.inputType = 'date';
-			this.setState({chatTextValue: this.state.chatTextValue});
-		}else{
-			this.state.chatTextValue.inputType = 'text';
-			this.setState({chatTextValue: this.state.chatTextValue});
-		}
+	componentWillMount: function(){
+		var firstQuestion = _.find(QuestionsList, {IsAsked: false});
+		this.state.chatTextValue.questionAsked = firstQuestion.Question;
+		this.state.chatTextValue.inputType = firstQuestion.Type;
+		this.state.chatTextValue.text = firstQuestion.Answer;
+		this.setState({chatTextValue: this.state.chatTextValue});
 	},
 
 	setChatBotState: function(event){
@@ -50709,38 +50709,141 @@ var ChatBot = React.createClass({displayName: "ChatBot",
 		return this.setState({chatTextValue: this.state.chatTextValue});
 	},
 
+	saveAnswer: function(event){
+		event.preventDefault();
+		var questionList =  _.find(QuestionsList, {Step: this.state.chatTextValue.step}); 
+		var questionListIndex = _.findIndex(QuestionsList, questionList); 
+		questionList.Answer = this.state.chatTextValue.text;
+		questionList.IsAsked = true;
+		QuestionsList.splice(questionListIndex, 1, questionList);
+		this.setState({chatTextValue: this.state.chatTextValue});
+	},
+
 	render: function() {
+		var chatBotDialog = {
+    		padding: '10px',
+    		border: 'solid 3px #ddd',
+    		minHeight: '500px',
+    		width: '512px',
+    		marginLeft: '411px'
+		}
+
+		var inputBox = {
+			display: 'inline-flex',
+			marginTop: '345px'
+		}
+
+		var sendButton = {
+			height: '34px',
+    		marginLeft: '10px'
+		}
+
 		return (
-			React.createElement("div", null, 
-				React.createElement("h1", null, "ChatBot"), 
-				React.createElement("label", null, this.state.chatTextValue.questionAsked), 
-				React.createElement(DynamicInputTypes, {
-					type: this.state.chatTextValue.inputType, 
-					name: "text", 
-					label: "text", 
-					value: this.state.chatTextValue.text, 
-					onChange: this.setChatBotState}
+			React.createElement("div", {className: "chat-bot-dialog", style: chatBotDialog}, 
+				React.createElement("div", null, 
+					React.createElement(ChatHistory, {questions: this.state.chatTextValue})
+				), 
+				React.createElement("div", {style: inputBox}, 
+					React.createElement(DynamicInputTypes, {
+						type: this.state.chatTextValue.inputType, 
+						name: "text", 
+						label: "text", 
+						value: this.state.chatTextValue.text, 
+						onChange: this.setChatBotState}
+					), 
+					React.createElement("button", {type: "button", style: sendButton, className: "btn btn-default btn-sm", onClick: this.saveAnswer}, "Send")
 				)
 			)
 		);
 	}
 });
 
+
+
 module.exports = ChatBot;
 
-},{"../common/dynamicInputType":215,"lodash":6,"react":202}],215:[function(require,module,exports){
+},{"../../constants/workFlow":222,"../chatHistory/chatHistory":215,"../common/dynamicInputType":216,"lodash":6,"react":202}],215:[function(require,module,exports){
+"use strict";
+
+var React = require('react');
+
+var ChatHistory = React.createClass({displayName: "ChatHistory",
+	getInitialState: function(){
+		return	{
+			
+		};
+	},
+
+	render: function() {
+		var messageContainer = {
+			padding: '7px',
+            border: 'solid 1px #ddd',
+            width: '512px',
+            backgroundColor: 'white',
+            whiteSpace: 'normal',
+            wordWrap: 'break-word',
+            maxWidth: '85%',
+            display: 'block',
+            /* border: solid 0.5px, */
+            color: '#3c434c',
+            float: 'left',
+            lineHeight: '11px',
+            borderRadius: '4px',
+            boxShadow: '0 2px 2px rgba(0,0,0,0.15),-2px 0 0 rgba(0,0,0,0.03),2px 0 0 rgba(0,0,0,0.03),0 2px 0 rgba(0,0,0,0.12)'
+		}
+
+		var userName = {
+			fontSize: '10px',
+    		display: 'block',
+    		marginLeft: '4px',
+    		marginTop: '2px'
+		}
+
+		var imageSize = {
+			height: '13px'
+		}
+
+		var onlieImage = {
+			display: '-webkit-box'
+		}
+
+		return (
+			React.createElement("div", null, 
+				React.createElement("h3", null, "Movie Booking"), 
+				React.createElement("div", null, 
+					React.createElement("div", {style: messageContainer}, 
+						React.createElement("div", {style: onlieImage}, 
+							React.createElement("img", {src: "images/online.png", style: imageSize}), 
+							React.createElement("label", {style: userName}, "Chatbot")
+						), 
+						React.createElement("label", null, this.props.questions.questionAsked)
+					), 
+					React.createElement("label", null, this.props.questions.text)
+				)
+			)
+		);
+	}
+});
+
+module.exports = ChatHistory;
+
+},{"react":202}],216:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
 
 var DynamicInputTypes = React.createClass({displayName: "DynamicInputTypes",
 	render: function(){
+		var inputBox = {
+			width: '426px'
+		}
 		return (
 			React.createElement("div", {className: "form-group"}, 
 				React.createElement("div", {className: "field"}, 
 					React.createElement("input", {type: this.props.type, 
 						name: this.props.name, 
 						className: "form-control", 
+						style: inputBox, 
 						ref: this.props.name, 
 						onChange: this.props.onChange, 
 						value: this.props.value})
@@ -50752,7 +50855,7 @@ var DynamicInputTypes = React.createClass({displayName: "DynamicInputTypes",
 
 module.exports = DynamicInputTypes;
 
-},{"react":202}],216:[function(require,module,exports){
+},{"react":202}],217:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -50781,7 +50884,48 @@ var Header = React.createClass({displayName: "Header",
 
 module.exports = Header;
 
-},{"react":202,"react-router":33}],217:[function(require,module,exports){
+},{"react":202,"react-router":33}],218:[function(require,module,exports){
+"use strict";
+
+var React = require('react');
+
+
+var Input = React.createClass({displayName: "Input",
+	propTypes: {
+		name: React.PropTypes.string.isRequired,
+		label: React.PropTypes.string.isRequired,
+		onChange: React.PropTypes.func.isRequired,
+		placeholder: React.PropTypes.string,
+		value: React.PropTypes.string,
+		error: React.PropTypes.string
+	},
+
+	render: function () {
+		var wrapperClass = 'form-group';
+		if(this.props.error && this.props.error.length > 0){
+			wrapperClass += " " + 'has-error';
+		}
+		return (
+			React.createElement("div", {className: wrapperClass}, 
+				React.createElement("label", {htmlFor: this.props.name}, this.props.label), 
+				React.createElement("div", {className: "field"}, 
+					React.createElement("input", {type: "text", 
+						name: this.props.name, 
+						className: "form-control", 
+						placeholder: this.props.placeholder, 
+						ref: this.props.name, 
+						onChange: this.props.onChange, 
+						value: this.props.value}), 
+					React.createElement("div", {className: "input"}, this.props.error)
+				)
+			)	
+		);
+	}
+});
+
+module.exports = Input;
+
+},{"react":202}],219:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -50803,7 +50947,7 @@ var Home = React.createClass({displayName: "Home",
 
 module.exports = Home;
 
-},{"react":202,"react-router":33}],218:[function(require,module,exports){
+},{"react":202,"react-router":33}],220:[function(require,module,exports){
 "use strict";
 var React = require('react');
 var Router = require('react-router');
@@ -50824,7 +50968,7 @@ var NotFoundPage = React.createClass({displayName: "NotFoundPage",
 
 module.exports = NotFoundPage;
 
-},{"react":202,"react-router":33}],219:[function(require,module,exports){
+},{"react":202,"react-router":33}],221:[function(require,module,exports){
 "use strict";
 
 var keyMirror = require('react/lib/keyMirror');
@@ -50836,12 +50980,85 @@ module.exports = keyMirror({
 	DELETE_AUTHOR: null
 });
 
-},{"react/lib/keyMirror":187}],220:[function(require,module,exports){
+},{"react/lib/keyMirror":187}],222:[function(require,module,exports){
+module.exports = {
+	workflow:
+	[
+		{
+			Question: "In which city are you looking for movie?",
+			Type: "dropdown",
+			IsAsked: false,
+			Step: 1,
+			Suggestion: ["Bangalore", "Hyderabad", "Pune", "Delhi"],
+			Answer: ""
+		}, 
+		{
+			Question: "Which movie are you looking for?",
+			Type: "text",
+			IsAsked: false,
+			Step: 2,
+			Suggestion: ["ABCD", "ABCD2", "ABCD3", "ABCD4"],
+			Answer: ""
+		},
+		{
+			Question: "On which date do you want to book a movie?",
+			Type: "date",
+			IsAsked: false,
+			Step: 3,
+			Answer: ""
+		},
+		{
+			Question: "Can you please select the show timing?",
+			Type: "time",
+			IsAsked: false,
+			Step: 4,
+			Answer: ""
+		},
+		{
+			Question: "How many tickets do you want to book?",
+			Type: "number",
+			IsAsked: false,
+			Step: 5,
+			Answer: ""
+		},
+		{
+			Question: "Can you please select the seats?",
+			Type: "text",
+			IsAsked: false,
+			Step: 6,
+			Suggestion: ["A1", "A2", "A3", "A4"],
+			Answer: ""
+		},
+		{
+			Question: "Can you please enter your Phone number?",
+			Type: "number",
+			IsAsked: false,
+			Step: 7,
+			Answer: ""
+		},
+		{
+			Question: "Can you please enter your email id?",
+			Type: "email",
+			IsAsked: false,
+			Step: 8,
+			Answer: ""
+		},
+		{
+			Question: "You have successfully booked the movie ticket.",
+			Type: "text",
+			IsAsked: false,
+			Step: 9,
+			Answer: ""
+		}
+	]
+};
+
+},{}],223:[function(require,module,exports){
 var Dispatcher = require('flux').Dispatcher;
 
 module.exports = new Dispatcher();
 
-},{"flux":2}],221:[function(require,module,exports){
+},{"flux":2}],224:[function(require,module,exports){
 var React = require('react');
 var Router = require('react-router');
 var routes = require('./routes');
@@ -50852,7 +51069,7 @@ InitializeActions.initApp();
 Router.run(routes, function(Handler){
 	React.render(React.createElement(Handler, null), document.getElementById('app'));
 });
-},{"./actions/initializeActions":205,"./routes":222,"react":202,"react-router":33}],222:[function(require,module,exports){
+},{"./actions/initializeActions":205,"./routes":225,"react":202,"react-router":33}],225:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -50879,7 +51096,7 @@ var routes = (
 
 module.exports = routes;
 
-},{"./components/about/aboutPage":208,"./components/app":209,"./components/authors/authorPage":212,"./components/authors/manageAuthorPage":213,"./components/chatBot/chatBot":214,"./components/homePage":217,"./components/notFoundPage":218,"react":202,"react-router":33}],223:[function(require,module,exports){
+},{"./components/about/aboutPage":208,"./components/app":209,"./components/authors/authorPage":212,"./components/authors/manageAuthorPage":213,"./components/chatBot/chatBot":214,"./components/homePage":219,"./components/notFoundPage":220,"react":202,"react-router":33}],226:[function(require,module,exports){
 "use strict";
 
 var Dispatcher = require('../dispatcher/appDispatcher');
@@ -50942,4 +51159,4 @@ Dispatcher.register(function(action){
 
 module.exports = AuthorStore;
 
-},{"../constants/actionTypes":219,"../dispatcher/appDispatcher":220,"events":1,"lodash":6,"object-assign":7}]},{},[221]);
+},{"../constants/actionTypes":221,"../dispatcher/appDispatcher":223,"events":1,"lodash":6,"object-assign":7}]},{},[224]);
