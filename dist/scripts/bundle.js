@@ -50685,7 +50685,8 @@ var _ = require('lodash');
 var ChatBot = React.createClass({displayName: "ChatBot",
 	getInitialState: function(){
 		return {
-			chatTextValue: {text: "", inputType: "", questionAsked: "", step: 1}
+			chatTextValue: {text: "", inputType: "", questionAsked: "", step: 1},
+			messageHistory: []
 		};
 	},
 
@@ -50697,6 +50698,7 @@ var ChatBot = React.createClass({displayName: "ChatBot",
 	componentWillMount: function(){
 		var firstQuestion = _.find(QuestionsList, {IsAsked: false});
 		this.state.chatTextValue.questionAsked = firstQuestion.Question;
+		this.state.messageHistory.push({question: firstQuestion.Question, user: false});
 		this.state.chatTextValue.inputType = firstQuestion.Type;
 		this.state.chatTextValue.text = firstQuestion.Answer;
 		this.setState({chatTextValue: this.state.chatTextValue});
@@ -50711,11 +50713,19 @@ var ChatBot = React.createClass({displayName: "ChatBot",
 
 	saveAnswer: function(event){
 		event.preventDefault();
-		var questionList =  _.find(QuestionsList, {Step: this.state.chatTextValue.step}); 
+		var questionList =  _.find(QuestionsList, {IsAsked: false}); 
 		var questionListIndex = _.findIndex(QuestionsList, questionList); 
 		questionList.Answer = this.state.chatTextValue.text;
+		this.state.messageHistory.push({question: this.state.chatTextValue.text, user: true});
+		this.setState({messageHistory: this.state.messageHistory});
 		questionList.IsAsked = true;
 		QuestionsList.splice(questionListIndex, 1, questionList);
+		this.setState({chatTextValue: this.state.chatTextValue});
+		var nextQuestion = _.find(QuestionsList, {IsAsked: false});
+		this.state.chatTextValue.questionAsked = nextQuestion.Question;
+		this.state.messageHistory.push({question: nextQuestion.Question, user: false});
+		this.state.chatTextValue.inputType = nextQuestion.Type;
+		this.state.chatTextValue.text = nextQuestion.Answer;
 		this.setState({chatTextValue: this.state.chatTextValue});
 	},
 
@@ -50739,9 +50749,15 @@ var ChatBot = React.createClass({displayName: "ChatBot",
 		}
 
 		return (
+
 			React.createElement("div", {className: "chat-bot-dialog", style: chatBotDialog}, 
+				React.createElement("h3", null, "Movie Booking"), 
 				React.createElement("div", null, 
-					React.createElement(ChatHistory, {questions: this.state.chatTextValue})
+				
+					this.state.messageHistory.map(function(name, index){
+						return React.createElement(ChatHistory, {questions: name})
+					})
+				
 				), 
 				React.createElement("div", {style: inputBox}, 
 					React.createElement(DynamicInputTypes, {
@@ -50770,8 +50786,16 @@ var React = require('react');
 var ChatHistory = React.createClass({displayName: "ChatHistory",
 	getInitialState: function(){
 		return	{
-			
+			user: 'Chatbot',
+			css: 'left'
 		};
+	},
+
+	componentWillMount: function(){
+		this.state.user = this.props.questions.user == true ? "User" : "Chatbot"
+		this.state.css = this.props.questions.user == true ? "right" : "left"
+		this.setState({user: this.state.user})
+		this.setState({css: this.state.css})
 	},
 
 	render: function() {
@@ -50782,11 +50806,12 @@ var ChatHistory = React.createClass({displayName: "ChatHistory",
             backgroundColor: 'white',
             whiteSpace: 'normal',
             wordWrap: 'break-word',
+            marginBottom: '11px',
             maxWidth: '85%',
             display: 'block',
             /* border: solid 0.5px, */
             color: '#3c434c',
-            float: 'left',
+            float: this.state.css,
             lineHeight: '11px',
             borderRadius: '4px',
             boxShadow: '0 2px 2px rgba(0,0,0,0.15),-2px 0 0 rgba(0,0,0,0.03),2px 0 0 rgba(0,0,0,0.03),0 2px 0 rgba(0,0,0,0.12)'
@@ -50809,17 +50834,14 @@ var ChatHistory = React.createClass({displayName: "ChatHistory",
 
 		return (
 			React.createElement("div", null, 
-				React.createElement("h3", null, "Movie Booking"), 
-				React.createElement("div", null, 
-					React.createElement("div", {style: messageContainer}, 
-						React.createElement("div", {style: onlieImage}, 
-							React.createElement("img", {src: "images/online.png", style: imageSize}), 
-							React.createElement("label", {style: userName}, "Chatbot")
-						), 
-						React.createElement("label", null, this.props.questions.questionAsked)
+				React.createElement("div", {style: messageContainer}, 
+					React.createElement("div", {style: onlieImage}, 
+						React.createElement("img", {src: "images/online.png", style: imageSize}), 
+						React.createElement("label", {style: userName}, this.state.user)
 					), 
-					React.createElement("label", null, this.props.questions.text)
+					React.createElement("label", null, this.props.questions.question)
 				)
+				
 			)
 		);
 	}

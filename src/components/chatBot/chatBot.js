@@ -9,7 +9,8 @@ var _ = require('lodash');
 var ChatBot = React.createClass({
 	getInitialState: function(){
 		return {
-			chatTextValue: {text: "", inputType: "", questionAsked: "", step: 1}
+			chatTextValue: {text: "", inputType: "", questionAsked: "", step: 1},
+			messageHistory: []
 		};
 	},
 
@@ -21,6 +22,7 @@ var ChatBot = React.createClass({
 	componentWillMount: function(){
 		var firstQuestion = _.find(QuestionsList, {IsAsked: false});
 		this.state.chatTextValue.questionAsked = firstQuestion.Question;
+		this.state.messageHistory.push({question: firstQuestion.Question, user: false});
 		this.state.chatTextValue.inputType = firstQuestion.Type;
 		this.state.chatTextValue.text = firstQuestion.Answer;
 		this.setState({chatTextValue: this.state.chatTextValue});
@@ -35,11 +37,19 @@ var ChatBot = React.createClass({
 
 	saveAnswer: function(event){
 		event.preventDefault();
-		var questionList =  _.find(QuestionsList, {Step: this.state.chatTextValue.step}); 
+		var questionList =  _.find(QuestionsList, {IsAsked: false}); 
 		var questionListIndex = _.findIndex(QuestionsList, questionList); 
 		questionList.Answer = this.state.chatTextValue.text;
+		this.state.messageHistory.push({question: this.state.chatTextValue.text, user: true});
+		this.setState({messageHistory: this.state.messageHistory});
 		questionList.IsAsked = true;
 		QuestionsList.splice(questionListIndex, 1, questionList);
+		this.setState({chatTextValue: this.state.chatTextValue});
+		var nextQuestion = _.find(QuestionsList, {IsAsked: false});
+		this.state.chatTextValue.questionAsked = nextQuestion.Question;
+		this.state.messageHistory.push({question: nextQuestion.Question, user: false});
+		this.state.chatTextValue.inputType = nextQuestion.Type;
+		this.state.chatTextValue.text = nextQuestion.Answer;
 		this.setState({chatTextValue: this.state.chatTextValue});
 	},
 
@@ -63,9 +73,15 @@ var ChatBot = React.createClass({
 		}
 
 		return (
+
 			<div className="chat-bot-dialog" style={chatBotDialog}>
+				<h3>Movie Booking</h3>
 				<div>
-					<ChatHistory questions={this.state.chatTextValue}/>
+				{
+					this.state.messageHistory.map(function(name, index){
+						return <ChatHistory questions={name}/>
+					})
+				}
 				</div>
 				<div style={inputBox}>
 					<DynamicInputTypes
